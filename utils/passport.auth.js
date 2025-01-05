@@ -28,7 +28,9 @@ passport.use(
     }
   )
 );
-
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config();
+}
 passport.use(
   new GoogleStrategy(
     {
