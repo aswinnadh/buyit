@@ -22,7 +22,6 @@ import { renderProfile } from "../controlers/profile.controller.js";
 
 import {
   handlePurchase,
-  handlePurchaseRazer,
   handlePurchaseWallet,
 } from "../controlers/purchase.controller.js";
 import { formSearch, renderSearch } from "../controlers/search.controller.js";
