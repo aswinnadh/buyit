@@ -1,0 +1,143 @@
+<%- include("./layouts/header.ejs") %>
+
+<section class="half-section">
+  <div class="profile">
+    <div class="title">
+      <div class="color-box"></div>
+      <p class="title-name">My Account</p>
+    </div>
+
+    <form
+      class="edit-profile"
+      action="/admin/saveProfile/<%= user._id %>?_method=PUT"
+      method="post"
+    >
+      <p class="off-price">Edit Your Profile</p>
+      <div class="field-container">
+        <label>Username</label>
+        <input type="text" name="username" value="<%= user.username || '' %>" />
+      </div>
+      <div class="field-container">
+        <label>Phone with country code</label>
+        <input type="text" name="phone" value="<%= user.phone || '' %>" />
+      </div>
+      <div class="field-container">
+        <label>Address</label>
+        <input type="text" name="address" value="<%= user.address || '' %>" />
+      </div>
+      <div class="field-container">
+        <label>District</label>
+        <input type="text" name="district" value="<%= user.district || '' %>" />
+      </div>
+      <div class="field-container">
+        <label>State</label>
+        <input type="text" name="state" value="<%= user.state || '' %>" />
+      </div>
+      <div class="field-container">
+        <label>Pincode</label>
+        <input type="text" name="pincode" value="<%= user.pincode || '' %>" />
+      </div>
+      <ul class="panel cart-panel">
+        <li>
+          <button class="btn cancel-btn" type="button" onclick="cancelEdit()">
+            Cancel
+          </button>
+        </li>
+        <li>
+          <button class="btn save-btn" type="submit">Save Changes</button>
+        </li>
+      </ul>
+    </form>
+  </div>
+  <div class="profile-right">
+    <div class="title">
+      <div class="color-box"></div>
+      <p class="title-name">Coupons</p>
+    </div>
+    <div class="coupons">
+      <% if (locals.isAdmin) { %>
+      <div class="add-coupon">
+        <form action="/admin/addCoupon" method="POST">
+          <div class="panel apply-coupon">
+            <input type="hidden" name="userId" value="<%= user._id %>" />
+            <input
+              type="text"
+              name="couponAmount"
+              placeholder="Coupon Amount"
+            />
+            <button type="submit" class="btn save-btn">Add Coupon</button>
+          </div>
+        </form>
+      </div>
+      <div class="add-to-wallet">
+        <form action="/admin/addToUserWallet" method="POST">
+          <div class="panel apply-coupon">
+            <input type="hidden" name="userId" value="<%= user._id %>" />
+            <input
+              type="text"
+              name="walletAmount"
+              placeholder="Amount to Wallet"
+            />
+            <button type="submit" class="btn save-btn">
+              Add to User Wallet
+            </button>
+          </div>
+        </form>
+      </div>
+      <% } %>
+
+      <div class="coupon-card wallet-card">
+        <h4 class="coupon-head">BuyIt Wallet</h4>
+        <p class="coupon-text">Your Balance</p>
+        <p class="disc-price">₹<%= wallet ? wallet.amount : 0 %></p>
+        <p class="coupon-text">Your userId</p>
+        <p class="coupon-code"><%= user._id %></p>
+      </div>
+
+      <% coupons.forEach(coupon => { %>
+      <div class="coupon-card">
+        <h4 class="coupon-head">BuyIt</h4>
+        <p class="coupon-text">Shopping Coupon</p>
+        <p class="disc-price">₹<%= coupon?.amount %></p>
+        <p class="coupon-text">On Each Purchase</p>
+        <p class="coupon-code"><%= coupon?._id %></p>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+</section>
+<section>
+  <table class="cart-table">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Amount</th>
+        <th>Date</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% orders.forEach(order => { %>
+      <tr>
+          <td>
+            <a href="/user/OrderDetails/<%= order._id %>">
+              <p><%= order._id %></p>
+            </a>
+          </td>
+          
+          <td><p><%= order.amount %></p></td>
+          <td class="price"><%= new Date(order.createdAt).toLocaleDateString() %></td>
+          <td>
+            <p><%= order.status %></p></td>
+          </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>
+<script>
+  function cancelEdit() {
+    location.reload();
+  }
+</script>
+<%- include("./layouts/footer.ejs") %>

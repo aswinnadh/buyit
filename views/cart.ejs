@@ -1,0 +1,116 @@
+<%- include("./layouts/header.ejs") %>
+
+<section class="best-selling section-card">
+  <div class="title">
+    <div class="color-box"></div>
+    <p class="title-name">My Cart</p>
+  </div>
+  <form id="cart-form" action="/user/updateCartQuantity" method="post">
+    <input type="hidden" name="userId" value="<%= userId %>">
+    <table class="cart-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Price</th>
+          <th>Quantity</th>
+          <th>Subtotal</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% cartItems.forEach(item => { %>
+        <tr>
+          <td class="user-panel panel">
+            <a href="/user/product/<%= item._id %>">
+              <img src="<%= item.images.length > 0 ? item.images[0] : '/assets/default-image.avif' %>" alt="" class="product-img-small" />
+              <p><%= item.name %></p>
+            </a>
+          </td>
+          <td class="price">
+            ₹<%= (item.price - (item.price * (item.offer / 100))).toFixed(0) %>
+
+          </td>
+          <td class="qty-container">
+            <button type="button" onclick="decrement(this)">-</button>
+            <input type="number" name="quantities[<%= item._id %>]" class="qty-input" min="1" max="<%= Math.min(5, item.stock) %>" value="<%= item.quantity %>" onchange="updateSubtotal(this)" />
+            <button type="button" onclick="increment(this)">+</button>
+          </td>
+          <td class="subtotal">
+            ₹<%= ((item.price - (item.price * (item.offer / 100))) * item.quantity).toFixed(0) %>
+
+          </td>
+          <td class="qty-container">
+            <form action="/user/removeItemFromCart/<%= item._id %>?_method=DELETE" method="post" style="display:inline;">
+              <button type="submit">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
+                  <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" />
+                </svg>
+              </button>
+            </form>
+          </td>
+          
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <button type="submit" class="btn buy-now" <% if (!cartItems.length) { %>disabled<% } %>>Update Cart</button>
+  </form>
+</section>
+
+
+
+<section class="cart-right panel">
+  <p class="cart-total">Total: ₹<span id="cart-total">0</span></p>
+  <a href="/user/checkOutCart"><button class="btn buy-now" <% if (!cartItems.length) { %>disabled<% } %>>Proceed to Purchase</button></a>
+</section>
+
+<script>
+  function updateSubtotal(element) {
+    const row = element.closest("tr");
+    const priceElement = row.querySelector(".price");
+    const qtyElement = row.querySelector(".qty-input");
+    const subtotalElement = row.querySelector(".subtotal");
+
+    const price = parseFloat(priceElement.textContent.replace("₹", ""));
+    const quantity = parseFloat(qtyElement.value);
+
+    const subtotal = price * quantity;
+    subtotalElement.textContent = `₹${subtotal}`;
+    updateCartTotal();
+  }
+
+  function increment(button) {
+    const row = button.closest("tr");
+    const input = row.querySelector(".qty-input");
+    let value = parseInt(input.value);
+    if (value < input.max) {
+      input.value = value + 1;
+      updateSubtotal(input);
+    }
+  }
+
+  function decrement(button) {
+    const row = button.closest("tr");
+    const input = row.querySelector(".qty-input");
+    let value = parseInt(input.value);
+    if (value > input.min) {
+      input.value = value - 1;
+      updateSubtotal(input);
+    }
+  }
+
+  function updateCartTotal() {
+    const subtotalElements = document.querySelectorAll('.subtotal');
+    let total = 0;
+    subtotalElements.forEach(subtotalElement => {
+      const subtotal = parseFloat(subtotalElement.textContent.replace("₹", ""));
+      total += subtotal;
+    });
+    document.getElementById('cart-total').textContent = total.toFixed(2);
+  }
+
+  // Initialize cart total on page load
+  document.addEventListener('DOMContentLoaded', updateCartTotal);
+</script>
+
+<%- include("./layouts/footer.ejs") %>

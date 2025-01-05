@@ -1,0 +1,59 @@
+<%- include("./layouts/header.ejs") %>
+
+<section>
+  <div class="title">
+    <div class="color-box"></div>
+    <p class="title-name">Order Details</p>
+  </div>
+  <h5>Order ID: <%= order._id %></h5>
+  <h5>Username: <%= order.user.username %></h5>
+  <h5>Email: <%= order.user.email %></h5>
+  <h5>Phone: <%= order.phone %></h5>
+  <h5>Amount: ₹<%= order.amount %></h5>
+  <h5>Payment Method: <%= order.method %></h5>
+  <h5>Status: <%= order.status %></h5>
+  <h5>Date: <%= new Date(order.createdAt).toLocaleDateString() %></h5>
+  
+  <p class="product-des">Address: <%= order.address %></p>
+  <p class="product-des">District: <%= order.district %></p>
+  <p class="product-des">State: <%= order.state %></p>
+  <p class="product-des">Pincode: <%= order.pincode %></p>
+  <p class="product-des">Coupon: <%= order.coupon || "Not applied" %></p>
+</section>
+<% order.items.forEach((item, index) => { %>
+<section class="half-section">
+  <div class="product-left">
+    <img
+      id="product-cover-<%= index %>"
+      src="<%= item.productId.images.length > 0 ? item.productId.images[0] : '/assets/default-image.avif' %>"
+      alt="image"
+    />
+    <ul class="product-images">
+      <% item.productId.images.forEach(image => { %>
+      <li><img src="<%= image %>" onclick="showImage('<%= index %>', this.src)" /></li>
+      <% }); %>
+    </ul>
+  </div>
+  <div class="product-right">
+    <h5><%= item.productId.name %></h5>
+    <div class="price-card">
+      <p class="off-price">
+        ₹<%= (item.productId.price - (item.productId.price * (item.productId.offer / 100))).toFixed(0) %>
+
+      </p>
+      <p class="og-price">₹<%= item.productId.price %></p>
+    </div>
+    <p class="rating"><%= item.productId.rating %></p>
+    <p class="product-des"><%= item.productId.detail %></p>
+    <p class="off-price">Ordered Color: <%= item.colour %></p>
+    <p class="off-price">Ordered Quantity: <%= item.quantity %></p>
+  </div>
+</section>
+<% }); %>
+<script>
+  function showImage(index, src) {
+    document.getElementById("product-cover-" + index).src = src;
+  }
+</script>
+
+<%- include("./layouts/footer.ejs") %>

@@ -1,0 +1,30 @@
+<%- include("./layouts/header.ejs") %>
+
+<section class="best-selling section-card ">
+    <div class="title">
+      <div class="color-box"></div>
+      <p class="title-name">Sign In to Your Account</p>
+    </div>
+    <div class="login">
+      <form class="edit-profile" action="/auth/login" method="post">
+          <p class="off-price">WELCOME BACK</p>
+          <div class="field-container">
+            <label>Email</label>
+            <input type="email" name="email" placeholder="your email id"/>
+          </div>
+          <div class="field-container">
+            <label>Password</label>
+            <input type="password" name="password" />
+          </div>
+      
+          <button class="btn save-btn" type="submit">SIGN IN</button>
+        </form>
+      
+        <a href="/auth/google"><button class="btn cancel-btn" type="button">Signin with Google</button></a>
+  
+        <a href="/auth/signup"> Don't Have an Account? </a>
+    </div>
+    
+  </section>
+
+<%- include("./layouts/footer.ejs") %>

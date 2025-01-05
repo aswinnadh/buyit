@@ -1,0 +1,82 @@
+<%- include("./layouts/header.ejs") %>
+
+<section class="grid-section section-card">
+  <div class="title">
+    <div class="color-box"></div>
+    <p class="title-name">My Wish List</p>
+  </div>
+  <ul class="product-list-grid">
+    <% wishlistItems.forEach(product => { %>
+    <li class="product-card-grid">
+      <a href="/user/product/<%= product._id %>"
+        ><% if (product.images&& product.images.length>0) { %>
+        <img src="<%= product.images[0] %>" alt="image" />
+        <% } else { %>
+        <img src="/assets/default-image.avif" alt="image" />
+        <% } %>
+      </a>
+      <div class="fav-badge">
+        <label class="fav-btn">
+          <input
+            type="checkbox"
+            id="fav-check"
+            data-product-id="<%= product._id %>"
+            <% if (wishlistProductIds.includes(product._id.toString())) { %>checked<% } %>
+          />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            height="24px"
+            viewBox="0 -960 960 960"
+            width="24px"
+          >
+            <path
+              d="m480-120-58-52q-101-91-167-157T150-447.5Q111-500 95.5-544T80-634q0-94 63-157t157-63q52 0 99 22t81 62q34-40 81-62t99-22q94 0 157 63t63 157q0 46-15.5 90T810-447.5Q771-395 705-329T538-172l-58 52Z"
+            />
+          </svg>
+        </label>
+      </div>
+      <div class="product-text">
+        <p><%= product.name %></p>
+        <div class="price-card">
+          <p class="off-price">₹<%= product.price - (product.price * (product.offer / 100)) %></p>
+          <p class="og-price">₹<%= product.price %></p>
+        </div>
+        <ul class="panel cart-panel">
+          <li><p class="rating"><%= product.rating %></p></li>
+          <li><form action="/user/addToCart" method="POST">
+            <input type="hidden" name="productId" value="<%= product._id %>" />
+            <input type="hidden" name="userId" value="<%= user._id %>" />
+            <input type="hidden" name="quantity" id="hidden-quantity" value="1" />
+            <input type="hidden" name="color" id="hidden-color" value="<%= product.colors[0] %>" />
+            <button type="submit" class="btn add-cart">Add to Cart</button>
+          </form></li>
+        </ul>
+      </div>
+    </li>
+    <% }) %>
+  </ul>
+  
+</section>
+
+<script>
+  document.querySelectorAll("#fav-check").forEach(checkbox => {
+    checkbox.addEventListener("change", function () {
+      const productId = this.getAttribute("data-product-id");
+      const isChecked = this.checked;
+      fetch("/user/editWishlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: productId, isChecked: isChecked }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Success:", data);
+          window.location.reload();
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    });
+  });
+</script>
+<%- include("./layouts/footer.ejs") %>

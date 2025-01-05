@@ -1,0 +1,33 @@
+<%- include("./layouts/header.ejs") %>
+
+<section class="best-selling section-card ">
+  <div class="title">
+    <div class="color-box"></div>
+    <p class="title-name">Create Account</p>
+  </div>
+  <div class="login">
+    <form class="edit-profile" action="/auth/signup" method="post">
+        <p class="off-price">WELCOME</p>
+        <div class="field-container">
+          <label>Username</label>
+          <input type="text" name="username" value="<%= locals.username? username: '' %>" />
+        </div>
+        <div class="field-container">
+          <label>Email</label>
+          <input type="email" name="email" value="<%= locals.email? email: '' %>"/>
+        </div>
+        <div class="field-container">
+          <label>Password</label>
+          <input type="password" name="password" />
+        </div>
+    
+        <button class="btn save-btn" type="submit">SIGN UP</button>
+      </form>
+    
+      <a href="/auth/google"><button class="btn cancel-btn" type="button">Signin with Google</button></a>
+
+      <a href="/auth/login"> Already Have an Account? </a>
+  </div>
+</section>
+
+<%- include("./layouts/footer.ejs") %>

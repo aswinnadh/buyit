@@ -1,0 +1,224 @@
+<%- include("./layouts/header.ejs") %>
+
+<section class="half-section">
+  <div class="profile">
+    <div class="title">
+      <div class="color-box"></div>
+      <p class="title-name">Place Your Order</p>
+    </div>
+
+    <div class="coupon-card wallet-card">
+      <h4 class="coupon-head">BuyIt Wallet</h4>
+      <p class="coupon-text">Your Balance</p>
+      <p class="disc-price">₹<%= wallet.amount %></p>
+      <p class="coupon-text">Your userId</p>
+      <p class="coupon-code"><%= user._id %></p>
+    </div>
+
+    <form class="edit-profile" action="/user/updateUserData" method="POST">
+      <p class="off-price">Address</p>
+      <div class="field-container">
+        <label>Username</label>
+        <input type="text" name="username" value="<%= user.username %>" />
+      </div>
+      <div class="field-container">
+        <label>Phone with country code</label>
+        <input type="text" name="phone" value="<%= user.phone || '' %>" />
+      </div>
+      <div class="field-container">
+        <label>Address</label>
+        <input type="text" name="address" value="<%= user.address || '' %>" />
+      </div>
+      <div class="field-container">
+        <label>District</label>
+        <input type="text" name="district" value="<%= user.district || '' %>" />
+      </div>
+      <div class="field-container">
+        <label>State</label>
+        <input type="text" name="state" value="<%= user.state || '' %>" />
+      </div>
+      <div class="field-container">
+        <label>Pincode</label>
+        <input type="text" name="pincode" value="<%= user.pincode || '' %>" />
+      </div>
+      <ul class="panel cart-panel">
+        <li>
+          <button
+            class="btn cancel-btn"
+            type="button"
+            onclick="window.location.reload();"
+          >
+            Cancel
+          </button>
+        </li>
+        <li>
+          <button class="btn save-btn" type="submit">Save Changes</button>
+        </li>
+      </ul>
+    </form>
+  </div>
+  <div class="payment">
+    <table class="cart-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Quantity</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% cartItems.forEach(item => { %>
+        <tr>
+          <td class="user-panel panel">
+            <a href="/user/product/<%= item._id %>">
+              <img
+                src="<%= item.images.length > 0 ? item.images[0] : '/assets/default-image.avif' %>"
+                alt=""
+                class="product-img-small"
+              />
+              <p><%= item.name %></p>
+            </a>
+          </td>
+          <td class="subtotal">
+            <p><%= item.quantity %></p>
+          </td>
+          <td class="subtotal">
+            ₹<%= ((item.price - (item.price * (item.offer / 100))) * item.quantity).toFixed(0) %>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    
+    <!-- Coupon Form -->
+    <form action="/user/applyCoupon" method="POST">
+      <div class="panel apply-coupon">
+        <input type="text" name="couponCode" placeholder="coupon code" />
+        <input type="hidden" name="price" id="hidden-price" value="" />
+        <button type="submit" class="btn save-btn">Apply Coupon</button>
+      </div>
+    </form>
+    
+    <div class="panel amount-panel Price-panel">
+      <p>Total</p>
+      <p class="amount price">₹<span id="total-amount">0</span></p>
+    </div>
+    <div class="panel amount-panel Price-panel">
+      <p>Coupon Code</p>
+      <p class="amount price">
+        <span id="c-code"><%= couponCode || 'No coupon applied' %></span>
+      </p>
+    </div>
+
+    <div class="panel amount-panel discount-panel">
+      <p>Discount</p>
+      <p class="amount discount">
+        ₹<span id="discount-amount"><%= discount %></span>
+      </p>
+    </div>
+    <div class="panel amount-panel total-panel">
+      <p>Amount to pay</p>
+      <p class="amount total">₹<span id="amount-to-pay">0</span></p>
+    </div>
+
+    <!-- Purchase Form -->
+    <form id="purchase-form" action="" method="POST">
+      <input type="hidden" name="userId" value="<%= user._id %>" />
+      <input type="hidden" name="username" value="<%= user.username %>" />
+      <input type="hidden" name="phone" value="<%= user.phone || '' %>" />
+      <input type="hidden" name="address" value="<%= user.address || '' %>" />
+      <input type="hidden" name="district" value="<%= user.district || '' %>" />
+      <input type="hidden" name="state" value="<%= user.state || '' %>" />
+      <input type="hidden" name="pincode" value="<%= user.pincode || '' %>" />
+      <input type="hidden" name="couponId" value="<%= couponCode || '' %>" />
+      <input
+        type="hidden"
+        name="amountToPay"
+        id="hidden-amount-to-pay"
+        value="0"
+      />
+
+      <% cartItems.forEach((item, index) => { %>
+      <input
+        type="hidden"
+        name="items[<%= index %>][productId]"
+        value="<%= item._id %>"
+      />
+      <input
+        type="hidden"
+        name="items[<%= index %>][quantity]"
+        value="<%= item.quantity %>"
+      />
+      <input
+        type="hidden"
+        name="items[<%= index %>][color]"
+        value="<%= item.color %>"
+      />
+      <% }) %>
+
+      <ul class="panel size-panel">
+        <li><p>Payment Method:</p></li>
+        <li>
+          <input type="radio" name="paymentMethod" value="WALLET" id="wallet" />
+          <label class="size-div" for="wallet">Wallet</label>
+        </li>
+        <li>
+          <input type="radio" name="paymentMethod" value="UPI" id="upi" />
+          <label class="size-div" for="upi">UPI</label>
+        </li>
+        <li>
+          <input type="radio" name="paymentMethod" value="COD" id="cod" />
+          <label class="size-div" for="cod">COD</label>
+        </li>
+      </ul>
+
+      <button type="button" class="btn buy-now" onclick="submitPurchaseForm()">
+        Buy Now
+      </button>
+    </form>
+    
+  </div>
+</section>
+
+<script>
+function updateTotal() {
+  const subtotalElements = document.querySelectorAll(".subtotal");
+  let total = 0;
+
+  subtotalElements.forEach((element) => {
+    const subtotal = parseFloat(element.textContent.replace("₹", ""));
+    total += subtotal;
+  });
+
+  const discount = parseFloat(document.getElementById("discount-amount").textContent) || 0;
+  const amountToPay = total - discount;
+
+  document.getElementById("total-amount").textContent = total.toFixed(0);
+  document.getElementById("amount-to-pay").textContent = amountToPay.toFixed(0);
+  document.getElementById("hidden-amount-to-pay").value = amountToPay.toFixed(0);
+  
+  // Set the hidden price input for coupon application
+  document.getElementById("hidden-price").value = total.toFixed(0);
+}
+
+document.addEventListener("DOMContentLoaded", updateTotal);
+
+function submitPurchaseForm() {
+  const selectedPaymentMethod = document.querySelector(
+    'input[name="paymentMethod"]:checked'
+  ).value;
+  const form = document.getElementById("purchase-form");
+
+  if (selectedPaymentMethod === "COD") {
+    form.action = "/user/purchaseCod";
+  } else if (selectedPaymentMethod === "UPI") {
+    form.action = "/user/purchaseUpi";
+  } else if (selectedPaymentMethod === "WALLET") {
+    form.action = "/user/purchaseWallet";
+  }
+
+  form.submit();
+}
+</script>
+
+<%- include("./layouts/footer.ejs") %>

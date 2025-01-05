@@ -1,0 +1,97 @@
+<%- include("./layouts/header.ejs") %>
+
+<section class="categories section-card">
+  <div class="title">
+    <div class="color-box"></div>
+    <p class="title-name">Edit Product</p>
+  </div>
+  <form
+    class="add-product"
+    action="/admin/editproduct/<%= product._id %>?_method=PUT"
+    method="post"
+    enctype="multipart/form-data"
+  >
+    <div class="add-feild-container">
+      <label>Product Name</label>
+      <input type="text" name="name" value="<%= product.name %>" />
+    </div>
+    <div class="add-feild-container">
+      <label>Category</label>
+      <select class="single" name="category" id="category">
+        <option value="MOBILE" <%= product.category === 'MOBILE' ? 'selected' : '' %>>Mobile</option>
+        <option value="LAPTOP" <%= product.category === 'LAPTOP' ? 'selected' : '' %>>Laptop</option>
+        <option value="WATCH" <%= product.category === 'WATCH' ? 'selected' : '' %>>Watches</option>
+        <option value="HEADPHONE" <%= product.category === 'HEADPHONE' ? 'selected' : '' %>>Headphones</option>
+        <option value="CAMERA" <%= product.category === 'CAMERA' ? 'selected' : '' %>>Cameras</option>
+        <option value="GAMING" <%= product.category === 'GAMING' ? 'selected' : '' %>>Gaming</option>
+      </select>
+    </div>
+    <div class="add-feild-container">
+      <label>Brand</label>
+      <input type="text" name="brand" value="<%= product.brand %>" />
+    </div>
+    <div class="add-feild-container">
+      <label>Price</label>
+      <input type="number" name="price" value="<%= product.price %>" />
+    </div>
+    <div class="add-feild-container">
+      <label>Offer</label>
+      <input type="number" name="offer" value="<%= product.offer %>" />
+    </div>
+    <div class="add-feild-container">
+      <label>Stock</label>
+      <input type="number" name="stock" value="<%= product.stock %>" />
+    </div>
+    <div class="add-feild-container">
+      <label>Rating</label>
+      <input type="number" name="rating" value="<%= product.rating %>" step="0.1"/>
+    </div>
+    <div class="add-feild-container">
+      <label>Description</label>
+      <textarea name="detail"><%= product.detail %></textarea>
+    </div>
+    <div class="add-feild-container">
+      <label>Colors</label>
+      <div>
+        <label><input type="checkbox" name="colors" value="red" <%= product.colors.includes('red') ? 'checked' : '' %> /> Red</label>
+        <label><input type="checkbox" name="colors" value="white" <%= product.colors.includes('white') ? 'checked' : '' %> /> White</label>
+        <label><input type="checkbox" name="colors" value="black" <%= product.colors.includes('black') ? 'checked' : '' %> /> Black</label>
+      </div>
+    </div>
+    <div class="add-feild-container">
+      <label>Images</label>
+      <input type="file" id="image-input" name="images" multiple accept="image/*" />
+    </div>
+    <div class="image-preview" id="image-preview">
+      <% product.images.forEach(image => { %>
+        <img src="<%= image %>" alt="image"/>
+      <% }) %>
+    </div>
+    <button class="btn save-btn" type="submit">Update Product</button>
+  </form>
+</section>
+
+<script>
+  document
+    .getElementById("image-input")
+    .addEventListener("change", function (event) {
+      const files = event.target.files;
+      const previewContainer = document.getElementById("image-preview");
+      previewContainer.innerHTML = "";
+      if (files.length > 0) {
+        Array.from(files).forEach((file) => {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const img = document.createElement("img");
+            img.src = e.target.result;
+            previewContainer.appendChild(img);
+          };
+          reader.readAsDataURL(file);
+        });
+      } else {
+        previewContainer.innerHTML = "<p>No images selected.</p>";
+      }
+    });
+</script>
+
+<%- include("./layouts/footer.ejs") %>
