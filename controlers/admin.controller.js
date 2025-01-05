@@ -60,7 +60,6 @@ export const renderProducts = async (req, res, next) => {
   }
 };
 
-
 export const renderEditproduct = async (req, res, next) => {
   try {
     const productId = req.query.id;
@@ -193,8 +192,12 @@ export const renderEditUser = async (req, res, next) => {
     const userId = req.params.id; // User ID from the URL
     const user = await User.findById(userId).exec(); // Fetch the user
     const coupons = await Coupon.find({ user: userId }).exec(); // Fetch coupons for the user
-    const wallet = await Wallet.findOne({ user: userId }).exec() || { amount: 0};// Fetch wallet for the user
-
+    const wallet = (await Wallet.findOne({ user: userId }).exec()) || {
+      amount: 0,
+    }; // Fetch wallet for the user
+    const orders = await Purchase.find({ user: userId }).populate(
+      "items.productId"
+    );
     // Check if user exists
     if (!user) {
       req.flash("error", "User not found.");
@@ -202,7 +205,13 @@ export const renderEditUser = async (req, res, next) => {
     }
 
     // Render profile page with wallet
-    res.render("profile", { coupons, user, admin, wallet: wallet || { amount: 0 } });
+    res.render("profile", {
+      coupons,
+      user,
+      admin,
+      orders,
+      wallet: wallet || { amount: 0 },
+    });
   } catch (error) {
     next(error); // Pass errors to the error-handling middleware
   }
@@ -234,11 +243,12 @@ export const saveProfile = async (req, res, next) => {
   }
 };
 
-
 export const renderOrders = async (req, res, next) => {
   try {
-    const orders = await Purchase.find().sort({ createdAt: -1 }).populate('user');
-    res.render('orderListAdmin', { orders });
+    const orders = await Purchase.find()
+      .sort({ createdAt: -1 })
+      .populate("user");
+    res.render("orderListAdmin", { orders });
   } catch (error) {
     next(error);
   }
@@ -265,12 +275,14 @@ export const updateOrderStatus = async (req, res, next) => {
 export const renderOrderDetails = async (req, res, next) => {
   try {
     const orderId = req.params.id;
-    const order = await Purchase.findById(orderId).populate('user').populate('items.productId');
+    const order = await Purchase.findById(orderId)
+      .populate("user")
+      .populate("items.productId");
     if (!order) {
       req.flash("error", "Order not found");
       return res.redirect("/admin/orders");
     }
-    res.render('orderDetails', { order });
+    res.render("orderDetails", { order });
   } catch (error) {
     next(error);
   }

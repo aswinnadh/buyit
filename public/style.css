@@ -606,7 +606,10 @@ input[type="radio"] {
     flex-direction: column;
     gap: 1rem;
 }
-
+.coupon-code button{
+    border: none;
+    background: none;
+}
 /* ------------------coupons-------------------- */
 
 .coupons {

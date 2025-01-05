@@ -1,3 +1,6 @@
+import Razorpay from "razorpay";
+import crypto from "crypto";
+
 import Cart from "../models/cart.model.js";
 import Purchase from "../models/purchase.model.js";
 import Wallet from "../models/wallet.model.js";
@@ -33,7 +36,7 @@ export const handlePurchase = async (req, res, next) => {
       !amountToPay ||
       !paymentMethod
     ) {
-      return res.status(400).json({ error: "Missing required fields" });
+      req.flash("error","Fields not be empty")
     }
 
     // Create new purchase object
@@ -71,16 +74,8 @@ export const handlePurchase = async (req, res, next) => {
     if (couponId) {
       await Coupon.deleteOne({ _id: couponId, user: userId });
 
-      // Generate a new coupon with a random amount between 100 and 1000
-      const randomAmount = Math.floor(Math.random() * (1000 - 100 + 1)) + 100;
-      const newCoupon = new Coupon({
-        user: userId,
-        amount: randomAmount,
-      });
-      await newCoupon.save();
-      req.flash("success", `you revieved a coupon of ₹ ${randomAmount}`);
     }
-
+    
     // Remove purchased items from the cart
     await Cart.deleteMany({
       user: userId,
@@ -95,6 +90,8 @@ export const handlePurchase = async (req, res, next) => {
     next(error);
   }
 };
+
+
 
 export const handlePurchaseWallet = async (req, res, next) => {
   try {
@@ -180,15 +177,16 @@ export const handlePurchaseWallet = async (req, res, next) => {
     if (couponId) {
       await Coupon.deleteOne({ _id: couponId, user: userId });
 
-      // Generate a new coupon with a random amount between 100 and 1000
-      const randomAmount = Math.floor(Math.random() * (1000 - 100 + 1)) + 100;
-      const newCoupon = new Coupon({
-        user: userId,
-        amount: randomAmount,
-      });
-      await newCoupon.save();
-      req.flash("success", `you revieved a coupon of ₹ ${randomAmount}`);
+      
     }
+    // Generate a new coupon with a random amount between 100 and 1000
+    const randomAmount = Math.floor(Math.random() * (1000 - 100 + 1)) + 100;
+    const newCoupon = new Coupon({
+      user: userId,
+      amount: randomAmount,
+    });
+    await newCoupon.save();
+    req.flash("success", `you revieved a coupon of ₹ ${randomAmount}`);
 
     // Remove purchased items from the cart
     await Cart.deleteMany({
@@ -207,3 +205,49 @@ export const handlePurchaseWallet = async (req, res, next) => {
     next(error); // Pass error to the error handler middleware
   }
 };
+
+
+// Initialize Razorpay instance
+// const razorpay = new Razorpay({
+//   key_id: process.env.RAZORPAY_KEY_ID,
+//   key_secret: process.env.RAZORPAY_KEY_SECRET
+// });
+
+// export const handlePurchaseRazer=async (req, res, next) => {
+//   try {
+//     const { amountToPay, userId, username, phone, address, district, state, pincode, items } = req.body;
+    
+//     // Convert amount to smallest currency unit (paise for INR)
+//     const amount = amountToPay * 100;
+
+//     // Create an order with Razorpay
+//     const options = {
+//       amount: amount,  // amount in the smallest currency unit
+//       currency: "INR",
+//       receipt: `receipt_${Date.now()}`,
+//       payment_capture: 1
+//     };
+
+//     const order = await razorpay.orders.create(options);
+    
+//     res.json({
+//       orderId: order.id,
+//       amount: order.amount,
+//       currency: order.currency,
+//       userId,
+//       username,
+//       phone,
+//       address,
+//       district,
+//       state,
+//       pincode,
+//       items
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
+
+
+

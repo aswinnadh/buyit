@@ -100,7 +100,17 @@
         <p class="coupon-text">Shopping Coupon</p>
         <p class="disc-price">₹<%= coupon?.amount %></p>
         <p class="coupon-text">On Each Purchase</p>
-        <p class="coupon-code"><%= coupon?._id %></p>
+        <p class="coupon-code"><%= coupon?._id %>
+          <button onclick="copyToClipboard('<%= coupon?._id %>')">
+            <svg xmlns="http://www.w3.org/2000/svg"
+            height="10px" 
+            viewBox="0 -960 960 960" 
+            width="10px" 
+            fill="#000">
+            <path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/></svg>
+          </button>
+        </p>
+
       </div>
       <% }) %>
     </div>
@@ -138,6 +148,9 @@
 <script>
   function cancelEdit() {
     location.reload();
+  }
+  function copyToClipboard(text) { 
+    navigator.clipboard.writeText(text)
   }
 </script>
 <%- include("./layouts/footer.ejs") %>

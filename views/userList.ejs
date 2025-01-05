@@ -6,17 +6,17 @@
   </div>
   <div class="list-control">
     <nav class="navbar-search">
-      <form class="search-form">
-        <input type="search" placeholder="Search" aria-label="Search">
-        <button class="search-btn" type="submit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
-          <path
-            d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"
-          /></svg
-      ></button>
+      <form id="search-form" class="search-form">
+        <input type="search" id="search-input" placeholder="Search by username" aria-label="Search">
+        <button class="search-btn" type="submit">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+            <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z" />
+          </svg>
+        </button>
       </form>
     </nav>
-    
   </div>
+  <div id="search-results-section" class="search-results-section"></div>
   <table class="cart-table">
     <thead>
       <tr>
@@ -27,15 +27,15 @@
         <th>Action</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody id="user-list">
       <% users.forEach(user => { %>
         <tr>
           <td class="user-panel panel">
-            <% if (user.images&& user.images.length>0) { %>
+            <% if (user.images && user.images.length > 0) { %>
               <img src="<%= user.images[0] %>" alt="image" class="avatar" />
-              <% } else { %>
+            <% } else { %>
               <img src="/assets/default-image.avif" alt="image" class="avatar" />
-              <% } %>
+            <% } %>
             <p><%= user.username %></p>
           </td>
           <td class="price"><%= user.email %></td>
@@ -61,19 +61,10 @@
           </td>
           <td class="qty-container">
             <a href="/admin/editUser/<%= user._id %>"><button>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                height="24px"
-                viewBox="0 -960 960 960"
-                width="24px"
-                fill="#e8eaed"
-              >
-                <path
-                  d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"
-                />
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
+                <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
               </svg>
             </button></a>
-
             <form action="/admin/deleteUser/<%= user._id %>?_method=DELETE" method="post">
               <button type="submit">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed">
@@ -81,14 +72,50 @@
                 </svg>
               </button>
             </form>
-            
-            
           </td>
         </tr>
       <% }) %>
-      
     </tbody>
   </table>
 </section>
+
+<script>
+  document.getElementById('search-input').addEventListener('input', function(event) {
+    const searchInput = event.target.value.toLowerCase();
+    const searchResultsSection = document.getElementById('search-results-section');
+    const userList = document.getElementById('user-list');
+    searchResultsSection.innerHTML = '';
+
+    const filteredUsers = Array.from(userList.children).filter(userRow => {
+      const username = userRow.querySelector('.user-panel p').textContent.toLowerCase();
+      return username.includes(searchInput);
+    });
+
+    if (filteredUsers.length > 0) {
+      const table = document.createElement('table');
+      table.className = 'cart-table';
+      const thead = document.createElement('thead');
+      thead.innerHTML = `
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      `;
+      table.appendChild(thead);
+      
+      const tbody = document.createElement('tbody');
+      filteredUsers.forEach(userRow => {
+        tbody.appendChild(userRow.cloneNode(true));
+      });
+      table.appendChild(tbody);
+      searchResultsSection.appendChild(table);
+    } else {
+      searchResultsSection.innerHTML = '<p>No results found</p>';
+    }
+  });
+</script>
 
 <%- include("./layouts/footer.ejs") %>
