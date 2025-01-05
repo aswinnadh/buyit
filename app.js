@@ -9,7 +9,7 @@ import connectFlash from "connect-flash";
 import MongoStore from "connect-mongo";
 // redirect back to previous page and check auth
 import connectEnsureLogin from "connect-ensure-login";
-import methodOverride from 'method-override';
+import methodOverride from "method-override";
 import indexRouter from "./routes/index.router.js";
 import authRouter from "./routes/auth.router.js";
 import userRouter from "./routes/user.router.js";
@@ -17,7 +17,9 @@ import adminRouter from "./routes/admin.router.js";
 import passport from "./utils/passport.auth.js";
 import { ensureAdmin } from "./middlewares/auth.middle.js";
 
-dotenv.config();
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config();
+}
 
 const app = express();
 const PORT = process.env.PORT || 3006;
@@ -95,8 +97,6 @@ app.use((req, res, next) => {
   next(createHttpError.NotFound());
 });
 
-
-
 app.use((error, req, res, next) => {
   if (res.headersSent) {
     return next(error);
@@ -109,5 +109,3 @@ app.use((error, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`http://localhost:${PORT}`);
 });
-
-
