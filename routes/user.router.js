@@ -1,6 +1,5 @@
 import { Router } from "express";
 import connectEnsureLogin from "connect-ensure-login";
-import crypto from "crypto";
 import { renderProduct } from "../controlers/home.controller.js";
 import {
   handleWishlist,
@@ -22,7 +21,9 @@ import { renderProfile } from "../controlers/profile.controller.js";
 
 import {
   handlePurchase,
+  handlePurchaseRazer,
   handlePurchaseWallet,
+  verifyPayment,
 } from "../controlers/purchase.controller.js";
 import { formSearch, renderSearch } from "../controlers/search.controller.js";
 import { renderOrderDetails } from "../controlers/admin.controller.js";
@@ -121,33 +122,24 @@ router.post(
   connectEnsureLogin.ensureLoggedIn({ redirectTo: "/auth/login" }),
   handlePurchase
 );
+
 router.post(
   "/purchaseWallet",
   connectEnsureLogin.ensureLoggedIn({ redirectTo: "/auth/login" }),
   handlePurchaseWallet
-);
-// router.post(
-//   "/purchaseUpi",
-//   connectEnsureLogin.ensureLoggedIn({ redirectTo: "/auth/login" }),
-//   handlePurchaseRazer
-// );
 
-// router.post("/verifyPayment", (req, res) => {
-//   const { razorpay_payment_id, razorpay_order_id, razorpay_signature } =
-//     req.body;
-//   const generated_signature = crypto
-//     .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-//     .update(razorpay_order_id + "|" + razorpay_payment_id)
-//     .digest("hex");
-//   if (generated_signature === razorpay_signature) {
-//     // Payment is successful, proceed with order fulfillment
-//     req.flash("success","Order placed successfully")
-//     res.redirect("/");
-//   } else {
-//     // Payment failed, handle accordingly
-//     req.flash("success","Order placed successfully")
-//     res.redirect("/");
-//   }
-// });
+);
+
+router.post(
+  "/purchaseUpi",
+  connectEnsureLogin.ensureLoggedIn({ redirectTo: "/auth/login" }),
+  handlePurchaseRazer
+);
+
+router.post(
+  "/verifyPayment",
+  connectEnsureLogin.ensureLoggedIn({ redirectTo: "/auth/login" }),
+  verifyPayment
+);
 
 export default router;

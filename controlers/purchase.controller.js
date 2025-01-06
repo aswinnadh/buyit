@@ -6,6 +6,7 @@ import Purchase from "../models/purchase.model.js";
 import Wallet from "../models/wallet.model.js";
 import Coupon from "../models/coupon.model.js";
 import Product from "../models/product.model.js";
+import { methods, status } from "../utils/constants.js";
 
 export const handlePurchase = async (req, res, next) => {
   try {
@@ -36,7 +37,7 @@ export const handlePurchase = async (req, res, next) => {
       !amountToPay ||
       !paymentMethod
     ) {
-      req.flash("error","Fields not be empty")
+      req.flash("error", "Fields not be empty");
     }
 
     // Create new purchase object
@@ -73,9 +74,8 @@ export const handlePurchase = async (req, res, next) => {
     // Delete applied coupon if provided
     if (couponId) {
       await Coupon.deleteOne({ _id: couponId, user: userId });
-
     }
-    
+
     // Remove purchased items from the cart
     await Cart.deleteMany({
       user: userId,
@@ -90,8 +90,6 @@ export const handlePurchase = async (req, res, next) => {
     next(error);
   }
 };
-
-
 
 export const handlePurchaseWallet = async (req, res, next) => {
   try {
@@ -122,7 +120,7 @@ export const handlePurchaseWallet = async (req, res, next) => {
       !amountToPay ||
       !paymentMethod
     ) {
-      req.flash("error", "Missing required fields");
+      req.flash("info", "Missing required fields");
       return res.redirect("back");
     }
 
@@ -176,8 +174,6 @@ export const handlePurchaseWallet = async (req, res, next) => {
     // Delete applied coupon if provided
     if (couponId) {
       await Coupon.deleteOne({ _id: couponId, user: userId });
-
-      
     }
     // Generate a new coupon with a random amount between 100 and 1000
     const randomAmount = Math.floor(Math.random() * (1000 - 100 + 1)) + 100;
@@ -206,48 +202,119 @@ export const handlePurchaseWallet = async (req, res, next) => {
   }
 };
 
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
-// Initialize Razorpay instance
-// const razorpay = new Razorpay({
-//   key_id: process.env.RAZORPAY_KEY_ID,
-//   key_secret: process.env.RAZORPAY_KEY_SECRET
-// });
+export const handlePurchaseRazer = async (req, res, next) => {
+  try {
+    const {
+      amountToPay,
+      userId,
+      username,
+      phone,
+      address,
+      district,
+      state,
+      pincode,
+      items,
+    } = req.body;
 
-// export const handlePurchaseRazer=async (req, res, next) => {
-//   try {
-//     const { amountToPay, userId, username, phone, address, district, state, pincode, items } = req.body;
-    
-//     // Convert amount to smallest currency unit (paise for INR)
-//     const amount = amountToPay * 100;
+    // Convert amount to smallest currency unit (paise for INR)
+    const amount = amountToPay * 100;
 
-//     // Create an order with Razorpay
-//     const options = {
-//       amount: amount,  // amount in the smallest currency unit
-//       currency: "INR",
-//       receipt: `receipt_${Date.now()}`,
-//       payment_capture: 1
-//     };
+    // Create an order with Razorpay
+    const options = {
+      amount: amount, // amount in the smallest currency unit
+      currency: "INR",
+      receipt: `receipt_${Date.now()}`,
+      payment_capture: 1,
+    };
 
-//     const order = await razorpay.orders.create(options);
-    
-//     res.json({
-//       orderId: order.id,
-//       amount: order.amount,
-//       currency: order.currency,
-//       userId,
-//       username,
-//       phone,
-//       address,
-//       district,
-//       state,
-//       pincode,
-//       items
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
+    const order = await razorpay.orders.create(options);
 
+    res.json({
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      userId,
+      username,
+      phone,
+      address,
+      district,
+      state,
+      pincode,
+      items,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
+export const verifyPayment = async (req, res) => {
+  const {
+    razorpay_payment_id,
+    razorpay_order_id,
+    razorpay_signature,
+    userId,
+    username,
+    phone,
+    address,
+    district,
+    state,
+    pincode,
+    items,
+    amountToPay,
+  } = req.body;
 
+  console.log("Received data for verification:", req.body); // Debugging line
 
+  const generated_signature = crypto
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .update(razorpay_order_id + "|" + razorpay_payment_id)
+    .digest("hex");
+
+  if (generated_signature === razorpay_signature) {
+    console.log("Payment verification successful"); // Debugging line
+    try {
+      // Payment is successful, proceed with order fulfillment
+      const newPurchase = new Purchase({
+        user: userId,
+        username,
+        phone,
+        address,
+        district,
+        state,
+        pincode,
+        items: items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          colour: item.color,
+        })),
+        amount: parseFloat(amountToPay),
+        method: methods.upi,
+        status: status.placed,
+        createdAt: Date.now(),
+      });
+
+      // Save purchase details to the database
+      await newPurchase.save();
+
+      console.log("Purchase details saved successfully:", newPurchase); // Debugging line
+
+      // Respond with success message
+      req.flash("success", "Order placed successfully");
+      res.redirect("/user/cart");
+    } catch (error) {
+      console.error("Error saving purchase details:", error);
+      req.flash("error", "Failed to save purchase details");
+      res.redirect("/user/cart");
+    }
+  } else {
+    // Payment verification failed
+    console.error("Payment verification failed"); // Debugging line
+    req.flash("error", "Payment verification failed");
+    res.redirect("/user/cart");
+  }
+};

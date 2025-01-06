@@ -83,13 +83,14 @@
             <p><%= item.quantity %></p>
           </td>
           <td class="subtotal">
-            ₹<%= ((item.price - (item.price * (item.offer / 100))) * item.quantity).toFixed(0) %>
+            ₹<%= ((item.price - (item.price * (item.offer / 100))) *
+            item.quantity).toFixed(0) %>
           </td>
         </tr>
         <% }) %>
       </tbody>
     </table>
-    
+
     <!-- Coupon Form -->
     <form action="/user/applyCoupon" method="POST">
       <div class="panel apply-coupon">
@@ -98,7 +99,7 @@
         <button type="submit" class="btn save-btn">Apply Coupon</button>
       </div>
     </form>
-    
+
     <div class="panel amount-panel Price-panel">
       <p>Total</p>
       <p class="amount price">₹<span id="total-amount">0</span></p>
@@ -176,52 +177,104 @@
         Buy Now
       </button>
     </form>
-    
   </div>
 </section>
 
 <script>
-function updateTotal() {
-  const subtotalElements = document.querySelectorAll(".subtotal");
-  let total = 0;
+  function updateTotal() {
+    const subtotalElements = document.querySelectorAll(".subtotal");
+    let total = 0;
 
-  subtotalElements.forEach((element) => {
-    const subtotal = parseFloat(element.textContent.replace("₹", ""));
-    total += subtotal;
-  });
+    subtotalElements.forEach((element) => {
+      const subtotal = parseFloat(element.textContent.replace("₹", ""));
+      total += subtotal;
+    });
 
-  const discount = parseFloat(document.getElementById("discount-amount").textContent) || 0;
-  const amountToPay = total - discount;
+    const discount =
+      parseFloat(document.getElementById("discount-amount").textContent) || 0;
+    const amountToPay = total - discount;
 
-  document.getElementById("total-amount").textContent = total.toFixed(0);
-  document.getElementById("amount-to-pay").textContent = amountToPay.toFixed(0);
-  document.getElementById("hidden-amount-to-pay").value = amountToPay.toFixed(0);
-  
-  // Set the hidden price input for coupon application
-  document.getElementById("hidden-price").value = total.toFixed(0);
-}
+    document.getElementById("total-amount").textContent = total.toFixed(0);
+    document.getElementById("amount-to-pay").textContent =
+      amountToPay.toFixed(0);
+    document.getElementById("hidden-amount-to-pay").value =
+      amountToPay.toFixed(0);
 
-document.addEventListener("DOMContentLoaded", updateTotal);
+    // Set the hidden price input for coupon application
+    document.getElementById("hidden-price").value = total.toFixed(0);
+  }
 
-function submitPurchaseForm() {
-  const selectedPaymentMethod = document.querySelector(
-    'input[name="paymentMethod"]:checked'
-  ).value;
+  document.addEventListener("DOMContentLoaded", updateTotal);
+</script>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+ function submitPurchaseForm() {
+  const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
   const form = document.getElementById("purchase-form");
 
   if (selectedPaymentMethod === "COD") {
     form.action = "/user/purchaseCod";
+    form.submit();
   } else if (selectedPaymentMethod === "UPI") {
-    form.action = "/user/purchaseUpi";
+    fetch("/user/purchaseUpi", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amountToPay: document.getElementById("hidden-amount-to-pay").value,
+        userId: form.userId.value,
+        username: form.username.value,
+        phone: form.phone.value,
+        address: form.address.value,
+        district: form.district.value,
+        state: form.state.value,
+        pincode: form.pincode.value,
+        items: Array.from(form.querySelectorAll('input[name^="items"]')).map((input, index) => ({
+          productId: form[`items[${index}][productId]`].value,
+          quantity: form[`items[${index}][quantity]`].value,
+          color: form[`items[${index}][color]`].value,
+        }))
+      })
+    })
+      .then(response => response.json())
+      .then(order => {
+        const options = {
+          key: "<%= process.env.RAZORPAY_KEY_ID %>",
+          amount: order.amount,
+          currency: order.currency,
+          name: "Your Company Name",
+          description: "Test Transaction",
+          image: "https://example.com/your_logo",
+          order_id: order.orderId,
+          handler: function (response) {
+            document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+            document.getElementById('razorpay_order_id').value = response.razorpay_order_id;
+            document.getElementById('razorpay_signature').value = response.razorpay_signature;
+            
+            form.action = "/user/verifyPayment";
+            form.method = "POST";
+            form.submit();
+          },
+          prefill: {
+            name: order.username,
+            email: "test@example.com",
+            contact: order.phone,
+          },
+          notes: { address: order.address },
+          theme: { color: "#3399cc" },
+        };
+        const rzp1 = new Razorpay(options);
+        rzp1.open();
+      })
+      .catch(error => console.error('Error:', error));
   } else if (selectedPaymentMethod === "WALLET") {
     form.action = "/user/purchaseWallet";
+    form.submit();
   }
-
-  form.submit();
 }
+
 </script>
-
-
 
 
 <%- include("./layouts/footer.ejs") %>

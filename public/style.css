@@ -96,8 +96,8 @@ nav ul li {
 nav svg {
     margin-top: .3rem;
     fill: var(--textColor2);
-    width: 30px;
-    height: 30px;
+    width: 20px;
+    height: 20px;
 
 }
 
@@ -258,7 +258,12 @@ h4 {
     align-items: center;
     cursor: pointer;
 }
-
+.categories ul li  a{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
 .categories ul li:hover {
     border: solid 4px var(--secBgColor);
 }
@@ -345,7 +350,7 @@ h4 {
 
 .product-list-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, .25fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 1rem;
 }
 
@@ -421,6 +426,7 @@ h4 {
 .product-right {
     display: flex;
     flex-direction: column;
+    overflow-x:hidden;
     gap: 1rem;
 
 }
