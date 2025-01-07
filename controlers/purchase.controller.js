@@ -1,12 +1,16 @@
+import dotenv from "dotenv";
 import Razorpay from "razorpay";
-import crypto from "crypto";
+import mongoose from 'mongoose';
+import crypto from 'crypto';
 
 import Cart from "../models/cart.model.js";
 import Purchase from "../models/purchase.model.js";
 import Wallet from "../models/wallet.model.js";
 import Coupon from "../models/coupon.model.js";
 import Product from "../models/product.model.js";
-import { methods, status } from "../utils/constants.js";
+import { methods, states, status } from "../utils/constants.js";
+
+dotenv.config();
 
 export const handlePurchase = async (req, res, next) => {
   try {
@@ -202,6 +206,7 @@ export const handlePurchaseWallet = async (req, res, next) => {
   }
 };
 
+
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
@@ -209,31 +214,17 @@ const razorpay = new Razorpay({
 
 export const handlePurchaseRazer = async (req, res, next) => {
   try {
-    const {
-      amountToPay,
-      userId,
-      username,
-      phone,
-      address,
-      district,
-      state,
-      pincode,
-      items,
-    } = req.body;
+    const { amountToPay, userId, username, phone, address, district, state, pincode, items } = req.body;
+    const amount = amountToPay * 100; // Convert amount to paise
 
-    // Convert amount to smallest currency unit (paise for INR)
-    const amount = amountToPay * 100;
-
-    // Create an order with Razorpay
     const options = {
-      amount: amount, // amount in the smallest currency unit
+      amount,
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
       payment_capture: 1,
     };
 
     const order = await razorpay.orders.create(options);
-
     res.json({
       orderId: order.id,
       amount: order.amount,
@@ -248,9 +239,12 @@ export const handlePurchaseRazer = async (req, res, next) => {
       items,
     });
   } catch (error) {
+    console.error("Razorpay order creation error:", error);
     next(error);
   }
 };
+
+
 
 export const verifyPayment = async (req, res) => {
   const {
@@ -266,21 +260,20 @@ export const verifyPayment = async (req, res) => {
     pincode,
     items,
     amountToPay,
+    couponId, // Capture the couponId if provided
   } = req.body;
 
-  console.log("Received data for verification:", req.body); // Debugging line
-
+  // Generate signature for verification
   const generated_signature = crypto
     .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
     .update(razorpay_order_id + "|" + razorpay_payment_id)
     .digest("hex");
 
   if (generated_signature === razorpay_signature) {
-    console.log("Payment verification successful"); // Debugging line
     try {
-      // Payment is successful, proceed with order fulfillment
+      // Create a new purchase document
       const newPurchase = new Purchase({
-        user: userId,
+        user: new mongoose.Types.ObjectId(userId), // Convert userId to ObjectId
         username,
         phone,
         address,
@@ -288,32 +281,48 @@ export const verifyPayment = async (req, res) => {
         state,
         pincode,
         items: items.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          colour: item.color,
+          productId: new mongoose.Types.ObjectId(item.productId), // Convert productId to ObjectId
+          quantity: parseInt(item.quantity, 10), // Ensure quantity is an integer
+          colour: item.color, // Match schema
         })),
-        amount: parseFloat(amountToPay),
+        coupon: couponId, // Include couponId
+        amount: parseFloat(amountToPay), // Convert amount to a number
         method: methods.upi,
         status: status.placed,
-        createdAt: Date.now(),
       });
 
-      // Save purchase details to the database
+      // Save the purchase
       await newPurchase.save();
 
-      console.log("Purchase details saved successfully:", newPurchase); // Debugging line
+      // Update stock for purchased items
+      for (const item of items) {
+        await Product.updateOne(
+          { _id: item.productId },
+          { $inc: { stock: -item.quantity } }
+        );
+      }
 
-      // Respond with success message
+      // Delete the applied coupon if provided
+      if (couponId) {
+        await Coupon.deleteOne({ _id: couponId, user: userId });
+      }
+
+      // Remove purchased items from the user's cart
+      await Cart.deleteMany({
+        user: userId,
+        item: { $in: items.map((item) => item.productId) },
+      });
+
+      console.log("Purchase saved successfully:", newPurchase);
       req.flash("success", "Order placed successfully");
       res.redirect("/user/cart");
     } catch (error) {
-      console.error("Error saving purchase details:", error);
+      console.error("Error saving purchase details:", error.message);
       req.flash("error", "Failed to save purchase details");
       res.redirect("/user/cart");
     }
   } else {
-    // Payment verification failed
-    console.error("Payment verification failed"); // Debugging line
+    console.error("Payment verification failed");
     req.flash("error", "Payment verification failed");
     res.redirect("/user/cart");
   }
