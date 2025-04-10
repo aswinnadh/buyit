@@ -17,9 +17,9 @@ import adminRouter from "./routes/admin.router.js";
 import passport from "./utils/passport.auth.js";
 import { ensureAdmin } from "./middlewares/auth.middle.js";
 
-if (process.env.NODE_ENV !== "production") {
+
   dotenv.config();
-}
+
 
 const app = express();
 const PORT = process.env.PORT || 3006;
@@ -109,3 +109,5 @@ app.use((error, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`http://localhost:${PORT}`);
 });
+export default app;
+
