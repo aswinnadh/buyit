@@ -106,6 +106,8 @@ app.use((error, req, res, next) => {
   res.render("error", { error });
 });
 
-
+// app.listen(PORT, () => {
+//   console.log(`http://localhost:${PORT}`);
+// });
 export default app;
 
